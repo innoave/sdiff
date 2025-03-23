@@ -6,6 +6,8 @@ license = "MIT OR Apache-2.0"
 edition = "2021"
 repository = "https://github.com/innoave/sdiff"
 
+description = "Find the differences between two sequences"
+
 [features]
 default = []
 std = []
