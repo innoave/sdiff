@@ -36,12 +36,15 @@ mod dummy_extern_uses {
 }
 
 /// Max length of the sequences that is supported.
-pub const MAX_SEQUENCE_LENGTH: usize = Trace::MAX_SEQUENCE_LENGTH;
+#[must_use]
+pub fn max_sequence_length() -> usize {
+    Trace::max_sequence_length()
+}
 
 /// Find the common subsequences and differences between two strings.
 ///
 /// Each of the two strings must not be longer than the max supported length
-/// [`MAX_SEQUENCE_LENGTH`].
+/// [`max_sequence_length()`].
 #[must_use]
 pub fn diff_str(left: &str, right: &str) -> Vec<Diff> {
     diff(
@@ -53,7 +56,7 @@ pub fn diff_str(left: &str, right: &str) -> Vec<Diff> {
 /// Find the common subsequences and differences between two slices.
 ///
 /// Each of the two slices must not be longer than the max supported length
-/// [`MAX_SEQUENCE_LENGTH`].
+/// [`max_sequence_length()`].
 #[must_use]
 pub fn diff<T>(left: &[T], right: &[T]) -> Vec<Diff>
 where
@@ -229,7 +232,15 @@ struct Trace {
 
 impl Trace {
     /// Max length of the sequences that is supported.
-    pub const MAX_SEQUENCE_LENGTH: usize = 2 * (isize::MAX.isqrt() as usize - 2);
+    #[must_use]
+    #[allow(
+        clippy::cast_precision_loss,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
+    pub fn max_sequence_length() -> usize {
+        2 * (libm::sqrt(isize::MAX as f64) as usize - 2)
+    }
 
     /// Constructs a new `Trace` with pre-allocated slots.
     ///
@@ -238,15 +249,14 @@ impl Trace {
     /// * sum of integers is *n * (n + 1) / 2*
     /// * *k* is iterated from *-d* to *+d* on every other.
     pub fn new(left_len: usize, right_len: usize) -> Self {
+        let max_sequence_length = Self::max_sequence_length();
         assert!(
-            left_len <= Self::MAX_SEQUENCE_LENGTH,
-            "the left sequence is longer than the max supported length of {}",
-            Self::MAX_SEQUENCE_LENGTH
+            left_len <= max_sequence_length,
+            "the left sequence is longer than the max supported length of {max_sequence_length}",
         );
         assert!(
-            right_len <= Self::MAX_SEQUENCE_LENGTH,
-            "the right sequence is longer than the max supported length of {}",
-            Self::MAX_SEQUENCE_LENGTH
+            right_len <= max_sequence_length,
+            "the right sequence is longer than the max supported length of {max_sequence_length}",
         );
 
         let max_depth = left_len + right_len;

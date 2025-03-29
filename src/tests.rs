@@ -7,6 +7,17 @@ mod properties {
     use crate::std::string::String;
     use proptest::prelude::*;
 
+    #[test]
+    #[allow(
+        clippy::cast_precision_loss,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
+    fn max_sequence_length_value() {
+        assert_that!(max_sequence_length())
+            .is_equal_to(2 * ((isize::MAX as f64).sqrt() as usize - 2));
+    }
+
     proptest! {
         #[test]
         fn diffing_any_two_strings_does_not_panic(
