@@ -1,6 +1,36 @@
 use super::*;
 use asserting::prelude::*;
 
+#[cfg(feature = "std")]
+mod properties {
+    use super::*;
+    use crate::std::string::String;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn diffing_any_two_strings_does_not_panic(
+            left in any::<String>(),
+            right in any::<String>(),
+        ) {
+            _ = diff_str(&left, &right);
+        }
+
+        #[test]
+        fn the_length_of_a_trace_is_less_than_or_equal_two_the_sum_of_the_length_of_the_two_sequences(
+            left in prop::collection::vec(any::<i32>(), 0..=600),
+            right in prop::collection::vec(any::<i32>(), 0..=600),
+        ) {
+            let trace = find_shortest_trace(&left, &right);
+
+            prop_assert!(trace.len() <= left.len() + right.len(),
+                "length of trace is at most the sum of the length of the sequences: {:?} <= {:?} + {:?}",
+                trace.len(), left.len(), right.len()
+            );
+        }
+    }
+}
+
 mod diff_strings {
     use super::*;
 

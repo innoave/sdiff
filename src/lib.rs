@@ -67,6 +67,11 @@ impl ShortestTrace {
     }
 
     #[must_use]
+    pub const fn data(&self) -> &[isize] {
+        &self.data
+    }
+
+    #[must_use]
     pub fn get(&self, d: isize, k: isize) -> &isize {
         let idx = Trace::calculate_index(d, k);
         &self.data[idx]
