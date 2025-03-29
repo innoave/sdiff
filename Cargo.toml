@@ -5,8 +5,12 @@ authors = ["haraldmaida"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
 repository = "https://github.com/innoave/sdiff"
+readme = "README.md"
 
 description = "Find the differences between two sequences"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [features]
 default = []
