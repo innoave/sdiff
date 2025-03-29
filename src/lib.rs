@@ -1,3 +1,12 @@
+//! Find the differences of two sequences.
+//!
+//! A diff function that finds the longest common subsequence (LCS). The output
+//! can easily be transformed to a shortest edit script (SES).
+//!
+//! The implementation is base on the [difference algorithm by Eugene W. Myers].
+//!
+//! [difference algorithm by Eugene W. Myers]: http://www.xmailserver.org/diff2.pdf
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "std"))]
@@ -19,6 +28,20 @@ use crate::std::{
     vec::Vec,
 };
 
+// workaround for false positive 'unused extern crate' warnings until
+// Rust issue [#95513](https://github.com/rust-lang/rust/issues/95513) is fixed
+#[cfg(test)]
+mod dummy_extern_uses {
+    use proptest as _;
+}
+
+/// Max length of the sequences that is supported.
+pub const MAX_SEQUENCE_LENGTH: usize = Trace::MAX_SEQUENCE_LENGTH;
+
+/// Find the common subsequences and differences between two strings.
+///
+/// Each of the two strings must not be longer than the max supported length
+/// [`MAX_SEQUENCE_LENGTH`].
 #[must_use]
 pub fn diff_str(left: &str, right: &str) -> Vec<Diff> {
     diff(
@@ -27,6 +50,10 @@ pub fn diff_str(left: &str, right: &str) -> Vec<Diff> {
     )
 }
 
+/// Find the common subsequences and differences between two slices.
+///
+/// Each of the two slices must not be longer than the max supported length
+/// [`MAX_SEQUENCE_LENGTH`].
 #[must_use]
 pub fn diff<T>(left: &[T], right: &[T]) -> Vec<Diff>
 where
@@ -36,47 +63,110 @@ where
     list_diffs(left, right, &trace)
 }
 
+/// A subsequence that is present in either of two sequences or in both.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Diff {
+    /// A subsequence that is only present in the left sequence. It starts at
+    /// the specified index [`Diff::Left::index`] into the left sequence and
+    /// has a length of [`Diff::Left::length`].
+    ///
+    /// This is equivalent to a 'remove' in an edit script.
     Left {
+        /// The index into the left sequence where the subsequence starts.
         index: usize,
+        /// The length of the subsequence.
         length: usize,
     },
+
+    /// A common subsequence of both sequences. This subsequence is present in
+    /// both, the left and the right sequence.
     Both {
+        /// The index into the left sequence where the common subsequence
+        /// starts.
         left_index: usize,
+        /// The index into the right sequence where the common subsequence
+        /// starts.
         right_index: usize,
+        /// The length of the common subsequence.
         length: usize,
     },
+
+    /// A subsequence that is only present in the right sequence. It starts at
+    /// the specified index [`Diff::Left::index`] into the right sequence and
+    /// has a length of [`Diff::Left::length`].
+    ///
+    /// This is equivalent to an 'insert' in an edit script.
     Right {
+        /// The index into the right sequence where the subsequence starts.
         index: usize,
+        /// The length of the subsequence.
         length: usize,
     },
 }
 
 /// The shortest trace found in the edit space.
+///
+/// The index *k* is calculated as *k = x - y*. *d* is the depth in the graph
+/// that is examined. The values stored in the matrix are the best *x* value
+/// that can be achieved at each point.
+///
+/// # Layout
+///
+/// ```text
+///     |                k
+///     |-5 -4 -3 -2 -1  0  1  2  3  4  5
+/// ----+---------------------------------
+///   0 |                o
+///   1 |             o  o  o
+/// d 2 |          o  o  o  o  o
+///   3 |       o  o  o  o  o  o  o
+///   4 |    o  o  o  o  o  o  o  o  o
+///   5 | o  o  o  o  o  o  o  o  o  o  o
+/// ```
+///
+/// # Example
+///
+/// Trace for diff of sequences 'ABCABBA' and 'CBABAC':
+///
+/// ```text
+///     |                k
+///     |-5 -4 -3 -2 -1  0  1  2  3  4  5
+/// ----+---------------------------------
+///   0 |                0
+///   1 |             0  0  1
+/// d 2 |          2  0  2  1  3
+///   3 |       3  2  4  2  5  3  5
+///   4 |       3  4  4  5  5  7  5  7
+///   5 |       3  4  5  5  7  7  5  7
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShortestTrace {
     data: Box<[isize]>,
     len: isize,
 }
 
 impl ShortestTrace {
+    /// The length of the found shortest trace.
     #[must_use]
     #[allow(clippy::cast_sign_loss, clippy::len_without_is_empty)]
     pub const fn len(&self) -> usize {
         self.len as usize
     }
 
+    /// A slice of the 2D-matrix containing the recorded trace.
     #[must_use]
     pub const fn data(&self) -> &[isize] {
         &self.data
     }
 
+    /// Get a shared reference to an element in the recorded trace.
     #[must_use]
     pub fn get(&self, d: isize, k: isize) -> &isize {
         let idx = Trace::calculate_index(d, k);
         &self.data[idx]
     }
 
+    /// Get a mutable reference to an element in the recorded trace.
     #[must_use]
     pub fn get_mut(&mut self, d: isize, k: isize) -> &mut isize {
         let idx = Trace::calculate_index(d, k);
