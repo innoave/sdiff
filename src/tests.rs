@@ -227,6 +227,64 @@ mod diff_strings {
     }
 
     #[test]
+    fn moved_block_of_chars_to_end() {
+        let left = "ABCDEFG";
+        let right = "AEFGBCD";
+
+        let diffs = diff_str(left, right);
+
+        assert_that!(diffs).contains_exactly([
+            Diff::Both {
+                left_index: 0,
+                right_index: 0,
+                length: 1,
+            },
+            Diff::Left {
+                index: 1,
+                length: 3,
+            },
+            Diff::Both {
+                left_index: 4,
+                right_index: 1,
+                length: 3,
+            },
+            Diff::Right {
+                index: 4,
+                length: 3,
+            },
+        ]);
+    }
+
+    #[test]
+    fn moved_block_of_chars_to_start() {
+        let left = "ABCDEFG";
+        let right = "CDEABFG";
+
+        let diffs = diff_str(left, right);
+
+        assert_that!(diffs).contains_exactly([
+            Diff::Left {
+                index: 0,
+                length: 2,
+            },
+            Diff::Both {
+                left_index: 2,
+                right_index: 0,
+                length: 3,
+            },
+            Diff::Right {
+                index: 3,
+                length: 2,
+            },
+            Diff::Both {
+                left_index: 5,
+                right_index: 5,
+                length: 2,
+            },
+        ]);
+    }
+
+    #[test]
     fn abcabba_and_cbabac() {
         let left = "abcabba";
         let right = "cbabac";
