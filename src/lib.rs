@@ -271,7 +271,7 @@ impl Trace {
     #[inline]
     #[allow(clippy::cast_sign_loss)]
     fn calculate_index(d: isize, k: isize) -> usize {
-        assert!(k >= -d && k <= d, "invalid index in matrix {:?}", (d, k));
+        debug_assert!(k >= -d && k <= d, "invalid index in matrix {:?}", (d, k));
         let k_offset = d * (d + 1) / 2;
         // *k* goes from *-d* to *d* so we need to map [-d, d] -> [0, 2d]
         let unsigned_k = k + d;
@@ -341,7 +341,7 @@ where
             };
 
             let mut y = x - k;
-            assert!(
+            debug_assert!(
                 y >= 0,
                 "y should always be greater than or equal to 0, but is: {y:?}"
             );
