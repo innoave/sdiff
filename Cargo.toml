@@ -21,7 +21,7 @@ std = []
 libm = "0.2"
 
 [dev-dependencies]
-asserting = "0.15"
+asserting = "0.16"
 proptest = "1"
 
 [lints.rust]
